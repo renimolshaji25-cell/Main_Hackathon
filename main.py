@@ -1,41 +1,67 @@
 # source_handbook: week11-hackathon-preparation
 import streamlit as st
 from groq import Groq
+import os
 
-# 1. Scaffolding & Configuration (cite: 13, 14, 15)
-st.set_page_config(page_title="Safe-Click Guard", page_icon="🤖")
-st.title("🤖 Safe-Click Security Agent")
+# 1. Page Config & Custom Styling (cite: 13, 15)
+st.set_page_config(page_title="Safe Clicq", layout="centered")
 
-# 2. Secret Handling (cite: 78)
-try:
-    client = Groq(api_key=st.secrets["GROQ_API_KEY"])
-except Exception:
-    st.error("Secret Key not found. Please check .streamlit/secrets.toml")
+# Custom CSS to match your UI design
+st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(180deg, #000000 0%, #30107a 100%);
+    }
+    h1 {
+        color: white;
+        font-family: 'Serif';
+        text-align: center;
+        font-size: 3rem !important;
+    }
+    p {
+        color: #b0b0b0;
+        text-align: center;
+        font-style: italic;
+    }
+    .stTextInput > div > div > input {
+        background-color: white !important;
+        color: black !important;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# 2. Header Section
+st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 2px;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
+st.markdown("<h1>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
+st.markdown("<p>Share your site link or message to Analyse Phishing</p>", unsafe_allow_html=True)
+
+# 3. Backend Logic (Groq Agent)
+api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
+if not api_key:
+    st.error("Missing GROQ_API_KEY!")
     st.stop()
 
-# 3. Chat History (Concept: Agent Memory vs Prompt) (cite: 101)
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": "You are a Cybersecurity Expert. Analyze inputs for phishing markers like urgency or deceptive URLs. Provide a risk score and reasoning."}
-    ]
+client = Groq(api_key=api_key)
 
-# Display history (cite: 53)
-for message in st.session_state.messages[1:]:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# 4. Input Fields
+user_input = st.text_input("Paste your link or message to analyse", placeholder="Type here...")
 
-# 4. Agentic Interaction (cite: 50, 101)
-if user_input := st.chat_input("Paste a link or message to analyze:"):
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    with st.chat_message("user"):
-        st.markdown(user_input)
-
-    with st.chat_message("assistant"):
-        with st.spinner("Reasoning..."):
+if user_input:
+    with st.spinner("Analysing..."):
+        try:
+            # Agentic Reasoning (cite: 101)
             response = client.chat.completions.create(
                 model="llama-3.3-70b-versatile",
-                messages=st.session_state.messages
+                messages=[
+                    {"role": "system", "content": "You are a cybersecurity expert. Provide a concise safety verdict and explain 'why' to a non-technical user (like a grandma)."},
+                    {"role": "user", "content": user_input}
+                ]
             )
-            full_response = response.choices[0].message.content
-            st.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            verdict = response.choices[0].message.content
+            
+            # Output Box matching your UI
+            st.text_area("Find our Analysis Here:", value=verdict, height=200)
+            
+        except Exception as e:
+            st.error(f"Error: {e}")
