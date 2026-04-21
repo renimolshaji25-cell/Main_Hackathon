@@ -40,7 +40,7 @@ st.markdown("""
 # 2. Hero Section
 st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 3px; font-size: 0.8rem; font-weight: bold;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
 st.markdown("<h1>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color: #b0b0b0; text-align: center; font-style: italic;'>Your conversational security assistant</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #b0b0b0; text-align: center; font-style: italic;'>Share your link or message to Analyse Phising</p>", unsafe_allow_html=True)
 
 # 3. Initialize Memory (cite: 101)
 if "messages" not in st.session_state:
@@ -59,7 +59,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # 6. Chat Input - This repeats after every message automatically
-if prompt := st.chat_input("Paste your link or ask a follow-up question here..."):
+if prompt := st.chat_input("Paste your link or message to analyse..."):
     # Add user message to state
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
