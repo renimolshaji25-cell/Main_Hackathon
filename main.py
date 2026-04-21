@@ -5,82 +5,65 @@ import os
 
 st.set_page_config(page_title="Safe Clicq", layout="centered")
 
-# 1. THE BULLETPROOF CSS: Forces Bold White text for the AI analysis
+# 1. THE ULTIMATE CSS OVERRIDE: This forces EVERY element to be Bold White
 st.markdown("""
     <style>
-    /* Main Background Gradient */
+    /* Background Gradient */
     .stApp {
         background: linear-gradient(180deg, #000000 0%, #200a5e 100%);
     }
     
-    /* Header Styling */
-    h1 { 
-        color: white; 
-        text-align: center; 
-        font-family: 'Times New Roman', serif; 
-        font-size: 3.5rem !important;
-        margin-bottom: 0px;
-    }
-    .second-title {
-        color: #b0b0b0; 
-        text-align: center; 
-        font-style: italic; 
-        font-size: 1.2rem;
-        margin-bottom: 40px;
-    }
+    /* Header & Titles */
+    h1 { color: white !important; text-align: center; font-family: serif; font-size: 3.5rem !important; }
+    .second-title { color: #b0b0b0 !important; text-align: center; font-style: italic; font-size: 1.2rem; }
 
-    /* THE FIX: Target the Assistant message box and force Bold White text */
-    [data-testid="stChatMessageAssistant"] {
-        background-color: rgba(255, 255, 255, 0.1) !important; /* Slight transparency for style */
+    /* THE ATOMIC FIX: Forcing Assistant messages to show BOLD WHITE text */
+    div[data-testid="stChatMessageAssistant"] {
+        background-color: rgba(48, 16, 122, 0.8) !important; /* Dark Purple Box */
+        border: 2px solid #8a63ff !important;
         border-radius: 15px !important;
-        padding: 20px !important;
-        border-left: 5px solid #8a63ff !important;
     }
 
-    /* FORCING ALL TEXT TO BOLD WHITE */
-    [data-testid="stChatMessageAssistant"] * {
+    /* Target every single piece of text inside the Assistant box */
+    div[data-testid="stChatMessageAssistant"] p, 
+    div[data-testid="stChatMessageAssistant"] li, 
+    div[data-testid="stChatMessageAssistant"] strong, 
+    div[data-testid="stChatMessageAssistant"] div,
+    div[data-testid="stChatMessageAssistant"] span {
         color: #FFFFFF !important;
-        font-weight: bold !important;
-        font-family: sans-serif !important;
-        font-size: 1.05rem !important;
+        font-weight: 900 !important; /* Ultra Bold */
+        font-size: 1.1rem !important;
+        -webkit-text-fill-color: white !important; /* Force for Chrome/Edge */
     }
 
-    /* Chat Input Styling */
-    .stChatInputContainer label {
-        color: white !important;
-        font-weight: bold !important;
+    /* Bold Label for Input */
+    .stChatInputContainer textarea {
+        color: black !important;
     }
-    
-    /* User message box */
-    [data-testid="stChatMessageUser"] {
-        background-color: rgba(255, 255, 255, 0.05) !important;
-        color: white !important;
-    }
+    label { color: white !important; font-weight: bold !important; }
+
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Hero Section
+# 2. Hero Section (Exact Layout)
 st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 3px; font-weight: bold; font-size: 0.8rem;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
 st.markdown("<h1>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
 st.markdown("<p class='second-title'>Share your site link or message to Analyse Phishing</p>", unsafe_allow_html=True)
 
-# 3. State Management
+# 3. State & Backend
 if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {"role": "system", "content": "You are a Cybersecurity Analyst. Provide a clear VERDICT and REASONING. Use bullet points."}
-    ]
+    st.session_state.messages = [{"role": "system", "content": "You are a Cybersecurity Analyst. Be direct."}]
 
-# 4. Backend
 api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
 
-# 5. Display Conversation History
+# 4. Display History
 for message in st.session_state.messages:
     if message["role"] == "system": continue
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 6. Chat Input
+# 5. Repeating Input Box
 if prompt := st.chat_input("Paste your link or ask follow-up here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
