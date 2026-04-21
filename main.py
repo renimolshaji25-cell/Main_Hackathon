@@ -3,62 +3,73 @@ import streamlit as st
 from groq import Groq
 import os
 
-# 1. Page Config & Professional UI Styling (cite: 13, 15)
 st.set_page_config(page_title="Safe Clicq", layout="centered")
 
+# 1. THE BULLETPROOF CSS: Restores layout, bolds labels, and forces white/black contrast
 st.markdown("""
     <style>
-    /* Gradient Background */
+    /* Main Background Gradient */
     .stApp {
         background: linear-gradient(180deg, #000000 0%, #200a5e 100%);
     }
     
-    /* Bold White Label for Input */
-    [data-testid="stChatInput"] label p {
-        font-weight: bold !important;
-        color: white !important;
+    /* Header Styling */
+    h1 { 
+        color: white; 
+        text-align: center; 
+        font-family: 'Times New Roman', serif; 
+        font-size: 3.5rem !important;
+        margin-bottom: 0px;
+    }
+    .second-title {
+        color: #b0b0b0; 
+        text-align: center; 
+        font-style: italic; 
+        font-size: 1.2rem;
+        margin-bottom: 40px;
     }
 
-    /* THE FIX: Forcing Assistant Messages to be White Boxes with Black Text */
+    /* Target the Assistant Message specifically - Force White Box */
     [data-testid="stChatMessageAssistant"] {
-        background-color: white !important;
-        color: black !important;
-        border-radius: 12px !important;
-        padding: 20px !important;
+        background-color: #FFFFFF !important; 
+        border-radius: 15px !important;
+        padding: 25px !important;
         border-left: 10px solid #8a63ff !important;
-        margin-bottom: 20px !important;
+        margin-top: 20px !important;
+    }
+
+    /* FORCING ALL TEXT INSIDE ANALYSIS TO BLACK */
+    [data-testid="stChatMessageAssistant"] * {
+        color: #000000 !important;
+        font-family: sans-serif !important;
+    }
+
+    /* Bold Label for Chat Input */
+    .stChatInputContainer label {
+        color: white !important;
+        font-weight: bold !important;
     }
     
-    /* Ensuring ALL text inside the assistant box is black and visible */
-    [data-testid="stChatMessageAssistant"] p, 
-    [data-testid="stChatMessageAssistant"] li,
-    [data-testid="stChatMessageAssistant"] strong,
-    [data-testid="stChatMessageAssistant"] span {
-        color: black !important;
-        font-weight: 500 !important;
-    }
-
-    /* User Message Styling (Subtle/Dark) */
+    /* User message box (subtle dark) */
     [data-testid="stChatMessageUser"] {
-        background-color: rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
     }
-
-    h1 { color: white; text-align: center; font-family: serif; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Hero Section
-st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 3px; font-size: 0.8rem; font-weight: bold;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
+# 2. Hero Section - EXACT LAYOUT REPRODUCED
+st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 3px; font-weight: bold; font-size: 0.8rem;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
 st.markdown("<h1>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
+st.markdown("<p class='second-title'>Share your site link or message to Analyse Phishing</p>", unsafe_allow_html=True)
 
-# 3. Initialize Memory (cite: 101)
+# 3. State Management (Memory)
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are a Cybersecurity Analyst. Provide clear verdicts, risk scores, and technical reasons. Output in clear markdown."}
+        {"role": "system", "content": "You are a Cybersecurity Analyst. Provide a clear VERDICT and REASONING. Always output in high-contrast markdown."}
     ]
 
-# 4. Backend Setup
+# 4. Backend
 api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
 
@@ -68,14 +79,14 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 6. Chat Input - Repeats automatically after each response
+# 6. Chat Input - This stays at the bottom and allows the "Chatbot" flow
 if prompt := st.chat_input("Paste your link or ask follow-up here..."):
-    # Add user message to state
     st.session_state.messages.append({"role": "user", "content": prompt})
+    # Display user input immediately
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate and display assistant response (White Box)
+    # Generate Response
     with st.chat_message("assistant"):
         with st.spinner("🔍 Analysing..."):
             try:
@@ -86,5 +97,7 @@ if prompt := st.chat_input("Paste your link or ask follow-up here..."):
                 full_response = response.choices[0].message.content
                 st.markdown(full_response)
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
+                # Rerun ensures the CSS "White Box" is applied to the newest message
+                st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
