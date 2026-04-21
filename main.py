@@ -5,7 +5,7 @@ import os
 
 st.set_page_config(page_title="Safe Clicq", layout="centered")
 
-# 1. THE BULLETPROOF CSS: Restores layout, bolds labels, and forces white/black contrast
+# 1. THE BULLETPROOF CSS: Forces Bold White text for the AI analysis
 st.markdown("""
     <style>
     /* Main Background Gradient */
@@ -29,28 +29,29 @@ st.markdown("""
         margin-bottom: 40px;
     }
 
-    /* Target the Assistant Message specifically - Force White Box */
+    /* THE FIX: Target the Assistant message box and force Bold White text */
     [data-testid="stChatMessageAssistant"] {
-        background-color: #FFFFFF !important; 
+        background-color: rgba(255, 255, 255, 0.1) !important; /* Slight transparency for style */
         border-radius: 15px !important;
-        padding: 25px !important;
-        border-left: 10px solid #8a63ff !important;
-        margin-top: 20px !important;
+        padding: 20px !important;
+        border-left: 5px solid #8a63ff !important;
     }
 
-    /* FORCING ALL TEXT INSIDE ANALYSIS TO BLACK */
+    /* FORCING ALL TEXT TO BOLD WHITE */
     [data-testid="stChatMessageAssistant"] * {
-        color: #000000 !important;
+        color: #FFFFFF !important;
+        font-weight: bold !important;
         font-family: sans-serif !important;
+        font-size: 1.05rem !important;
     }
 
-    /* Bold Label for Chat Input */
+    /* Chat Input Styling */
     .stChatInputContainer label {
         color: white !important;
         font-weight: bold !important;
     }
     
-    /* User message box (subtle dark) */
+    /* User message box */
     [data-testid="stChatMessageUser"] {
         background-color: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
@@ -58,15 +59,15 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Hero Section - EXACT LAYOUT REPRODUCED
+# 2. Hero Section
 st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 3px; font-weight: bold; font-size: 0.8rem;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
 st.markdown("<h1>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
 st.markdown("<p class='second-title'>Share your site link or message to Analyse Phishing</p>", unsafe_allow_html=True)
 
-# 3. State Management (Memory)
+# 3. State Management
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are a Cybersecurity Analyst. Provide a clear VERDICT and REASONING. Always output in high-contrast markdown."}
+        {"role": "system", "content": "You are a Cybersecurity Analyst. Provide a clear VERDICT and REASONING. Use bullet points."}
     ]
 
 # 4. Backend
@@ -79,14 +80,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 6. Chat Input - This stays at the bottom and allows the "Chatbot" flow
+# 6. Chat Input
 if prompt := st.chat_input("Paste your link or ask follow-up here..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    # Display user input immediately
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Generate Response
     with st.chat_message("assistant"):
         with st.spinner("🔍 Analysing..."):
             try:
@@ -97,7 +96,6 @@ if prompt := st.chat_input("Paste your link or ask follow-up here..."):
                 full_response = response.choices[0].message.content
                 st.markdown(full_response)
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
-                # Rerun ensures the CSS "White Box" is applied to the newest message
                 st.rerun()
             except Exception as e:
                 st.error(f"Error: {e}")
