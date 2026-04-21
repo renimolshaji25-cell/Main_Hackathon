@@ -3,87 +3,78 @@ import streamlit as st
 from groq import Groq
 import os
 
+# 1. Page Config & Professional UI Styling (cite: 13, 15)
 st.set_page_config(page_title="Safe Clicq", layout="centered")
 
-# 1. Your Exact UI Styling
 st.markdown("""
     <style>
     .stApp {
         background: linear-gradient(180deg, #000000 0%, #200a5e 100%);
     }
-    label p {
-        font-weight: bold !important;
-        color: #ffffff !important;
-        font-size: 1.1rem !important;
+    
+    /* Styling the Chat Messages */
+    .stChatMessage {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        margin-bottom: 10px;
     }
-    .stTextArea textarea {
+
+    /* Making the Assistant (Analysis) Box White with Black Text */
+    [data-testid="stChatMessageAssistant"] {
         background-color: white !important;
         color: black !important;
-        border-radius: 10px;
-        padding: 15px !important;
+        border-left: 8px solid #8a63ff;
     }
-    /* Fixed White Analysis Box */
-    .analysis-box {
-        background-color: white;
-        color: black;
-        padding: 25px;
-        border-radius: 12px;
-        margin-top: 20px;
-        border-left: 10px solid #8a63ff;
-        min-height: 200px;
-    }
-    .analysis-box p, .analysis-box li, .analysis-box h3, .analysis-box strong {
+    
+    [data-testid="stChatMessageAssistant"] p, 
+    [data-testid="stChatMessageAssistant"] li,
+    [data-testid="stChatMessageAssistant"] strong {
         color: black !important;
     }
+
+    /* Header Styling */
+    h1 { color: white; text-align: center; font-family: serif; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. Header
+# 2. Hero Section
 st.markdown("<p style='text-align: center; color: #8a63ff; letter-spacing: 3px; font-size: 0.8rem; font-weight: bold;'>✨ WELCOME TO SAFE CLICQ</p>", unsafe_allow_html=True)
-st.markdown("<h1 style='color: white; text-align: center; font-family: serif;'>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
+st.markdown("<h1>Instantly Analyse, Detect <br> Stay Secured</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color: #b0b0b0; text-align: center; font-style: italic;'>Your conversational security assistant</p>", unsafe_allow_html=True)
 
-# 3. Memory Setup (cite: 101)
+# 3. Initialize Memory (cite: 101)
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": "You are a Professional Cybersecurity Analyst. Analyze the input. Be concise. Start with VERDICT and RISK SCORE."}
+        {"role": "system", "content": "You are a Cybersecurity Analyst. Provide clear verdicts, risk scores, and technical reasons. Stay professional."}
     ]
-if "last_analysis" not in st.session_state:
-    st.session_state.last_analysis = "Your analysis will appear here after you paste a link or message..."
 
 # 4. Backend Setup
 api_key = st.secrets.get("GROQ_API_KEY") or os.getenv("GROQ_API_KEY")
 client = Groq(api_key=api_key)
 
-# 5. The Input Box (Always stays at the top/middle as per your design)
-user_input = st.text_area("Paste your link or message to analyse", 
-                          placeholder="Paste here and press Ctrl+Enter to send...",
-                          height=100)
+# 5. Display Chat History (The Repeating Conversation)
+for message in st.session_state.messages:
+    if message["role"] == "system": continue
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# 6. Logic: Update the existing state instead of appending new boxes
-if user_input:
-    # Only trigger if the input is new
-    if "last_input" not in st.session_state or user_input != st.session_state.last_input:
+# 6. Chat Input - This repeats after every message automatically
+if prompt := st.chat_input("Paste your link or ask a follow-up question here..."):
+    # Add user message to state
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    # Generate and display assistant response
+    with st.chat_message("assistant"):
         with st.spinner("🔍 Analysing..."):
             try:
-                st.session_state.messages.append({"role": "user", "content": user_input})
-                st.session_state.last_input = user_input
-                
                 response = client.chat.completions.create(
                     model="llama-3.3-70b-versatile",
                     messages=st.session_state.messages
                 )
-                
-                # Update the SINGLE analysis state
-                st.session_state.last_analysis = response.choices[0].message.content
-                st.session_state.messages.append({"role": "assistant", "content": st.session_state.last_analysis})
-                
+                full_response = response.choices[0].message.content
+                st.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
             except Exception as e:
                 st.error(f"Error: {e}")
-
-# 7. THE EXACT FORMAT: One single box that changes content
-st.markdown(f"""
-    <div class="analysis-box">
-        <h3 style="margin-top: 0;">Analysis Report:</h3>
-        {st.session_state.last_analysis}
-    </div>
-    """, unsafe_allow_html=True)
